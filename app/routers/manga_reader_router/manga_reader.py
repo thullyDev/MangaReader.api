@@ -86,10 +86,6 @@ async def get_filter_mangas(*, endpoint="/filter", params={}) -> Union[Dict[str,
 async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
     response: Any = await api.get(endpoint=f"/{manga_ID}", html=True)
 
-    # chapters
-    # related manga
-
-    
     if type(response) is int:
         return NOT_FOUND
 
