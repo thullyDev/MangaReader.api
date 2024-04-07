@@ -118,6 +118,17 @@ async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
             "role": role,
         })
 
+    chapters: list[Dict] = []
+    for item in soup.select(".chapter-item > a"):
+        print(item)
+        slug = item.get("href")
+        title = item.get("title")
+
+        chapters.append({
+            "slug": slug,
+            "title": title,
+        })
+
 
     return {
         "manga": {
@@ -133,6 +144,7 @@ async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
             "score": score,
             "views": views,
             "characters": characters,
+            "chapters": chapters,
         }
     }
 
@@ -149,7 +161,10 @@ def get_data_from_image(item) -> Dict[str, str]:
         "image_url": image_url,
     }
 
-def get_data_from_ticks(items, is_dynamic: bool =True) -> List[Dict[str, str]]:
+def get_data_from_ticks(items, is_dynamic: bool =True) -> Optional[List[Dict[str, str]]]:
+    if not items:
+        return None
+
     if not is_dynamic:
         return items[0].text
 
