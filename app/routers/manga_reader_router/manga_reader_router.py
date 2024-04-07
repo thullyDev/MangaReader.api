@@ -44,8 +44,17 @@ async def filter(
      return response.successful_response({"data": data })
 
 @router.get("/genre/{genre_ID}")
-async def filter(genre_ID, page: Optional[str] = "1") -> JSONResponse:
+async def genre(genre_ID, page: Optional[str] = "1") -> JSONResponse:
      data: Union[Dict[str, Union[List, Dict]], int] = await get_filter_mangas(endpoint=f"/genre/{genre_ID}", params={ "page": page })
+
+     if data == CRASH:
+          return response.crash_response()
+
+     return response.successful_response({"data": data })
+
+@router.get("/type/{type_ID}")
+async def get_type(type_ID, page: Optional[str] = "1") -> JSONResponse:
+     data: Union[Dict[str, Union[List, Dict]], int] = await get_filter_mangas(endpoint=f"/type/{type_ID}", params={ "page": page })
 
      if data == CRASH:
           return response.crash_response()

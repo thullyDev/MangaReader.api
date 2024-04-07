@@ -49,7 +49,7 @@ async def get_filter_mangas(*, endpoint="/filter", params={}) -> Union[Dict[str,
     last_page_link = soup.select('.page-link')[-1]
     pages = last_page_link.text 
 
-    if pages == "»":
+    if pages in [ "»", "‹" ]:
         href: Any = last_page_link.get("href")
         pages = href.split("=")[-1]
 
@@ -85,21 +85,41 @@ async def get_filter_mangas(*, endpoint="/filter", params={}) -> Union[Dict[str,
 
 async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
     response: Any = await api.get(endpoint=f"/{manga_ID}", html=True)
+
+    # type
+    # status
+    # authors
+    # magazines
+    # published
+    # score
+    # views
+    # description
+    # genres
+    # chapters
+    # alternate name
+    # related manga
+
     
     if type(response) is int:
         return NOT_FOUND
 
     soup = get_soup(html=response)
-    title: str = soup.select('.manga-name')[0].text
+    image_data = get_data_from_image(soup)
+    alt_name: str = soup.select('.manga-name-or')[0].text
+    description: str = soup.select('.description')[0].text
 
-    print("manga-name ==> ", title)
-
-    return {}
+    return {
+        "manga": {
+            **image_data,
+            "alt_name": alt_name,
+            "description": description,
+        }
+    }
 
 def get_soup(html) -> BeautifulSoup:
     return BeautifulSoup(html, 'html.parser')
 
-def get_data_from_image(item):
+def get_data_from_image(item) -> Dict[str, str]:
     image = item.select('.manga-poster-img')[0]
     image_url = image.get('src')
     title = image.get('alt')
