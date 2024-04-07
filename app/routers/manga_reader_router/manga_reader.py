@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
 from bs4 import BeautifulSoup
 from app.handlers.api_handler import ApiHandler
-from app.resources.errors import CRASH
+from app.resources.errors import CRASH, NOT_FOUND
 from pprint import pprint
 
 api = ApiHandler("https://mangareader.to")
@@ -32,11 +32,11 @@ async def get_featured_mangas() -> Union[List[Dict[str, str]], int]:
 
     return data
 
-async def get_filter_mangas(*, params={}) -> Union[List[Dict[str, str]], int]:
+async def get_filter_mangas(*, params={}) -> Union[Dict[str, Union[List, Dict]], int]:
     filter_data: Dict[str, Optional[str]] = {
         key: value
         for key, value in params.items()
-        if value and key in { "type", "score", "rating_type", "sort", "genres", "language" }
+        if value and key in { "type", "score", "rating_type", "sort", "genres", "language", "page" }
     }
 
     response: Any = await api.get(endpoint="/filter", params=filter_data, html=True)
@@ -46,20 +46,55 @@ async def get_filter_mangas(*, params={}) -> Union[List[Dict[str, str]], int]:
 
     soup = get_soup(html=response)
     items: List = soup.select('.item.item-spc')
-    data: List[Dict[str, str]] = []
+    last_page_link = soup.select('.page-link')[-1]
+    pages = last_page_link.text 
+    
+    if pages == "»":
+        href: Any = last_page_link.get("href")
+        page = href.split("=")[-1]
+
+    page: str = params['page']
+    data: List[Dict[str, Union[str, List]]] = []
     
     for item in items:
-        genres = item.select(".fdi-item.fdi-cate>a")
+        genres_elems = item.select(".fdi-item.fdi-cate>a")
+        genres: List[Dict[str, str]] = []
+        for ele in genres_elems:
+            genres.append({
+                "name": ele.text,
+                "slug": ele.get("href").split('/')[-1]
+            })
         chapters = item.select(".chapter>a")[0].get("href").split("-")[-1]
         slug = item.select('.manga-poster')[0].get('href')
         image_data: Dict[str, str] = get_data_from_image(item)
         data.append({
             "chapters": chapters,
             "slug": slug,
+            "genres": genres,
             **image_data
         })
 
-    return data
+    return {
+        "mangas": data,
+        "pagination": {
+            "pages": pages,
+            "page": page,
+        }
+    }
+
+
+async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
+    response: Any = await api.get(endpoint=f"/{manga_ID}", html=True)
+    
+    if type(response) is int:
+        return NOT_FOUND
+
+    soup = get_soup(html=response)
+    title: str = soup.select('.manga-name')[0].text
+
+    print("manga-name ==> ", title)
+
+    return {}
 
 def get_soup(html) -> BeautifulSoup:
     return BeautifulSoup(html, 'html.parser')

@@ -1,10 +1,13 @@
 from fastapi import APIRouter, params
 from fastapi.responses import JSONResponse
+
+from app.resources.errors import CRASH, NOT_FOUND
 from ...handlers import ResponseHandler
 from typing import Any, Dict, List, Union, Optional
 from .manga_reader import (
      get_featured_mangas,
-     get_filter_mangas
+     get_filter_mangas,
+     get_manga
 )
 
 router: APIRouter = APIRouter(prefix="/manga")
@@ -22,16 +25,31 @@ async def filter(
      sort: Optional[str] = None, 
      status: Optional[str] = None, 
      read_type: Optional[str] = None, 
-     rating_type: Optional[str] = None
+     rating_type: Optional[str] = None,
+     page: Optional[str] = "1"
      ) -> JSONResponse:
-     data: Union[List[Dict[str, str]], int] = await get_filter_mangas(params={
+     data: Union[List[Dict[str, Union[str, List]]], int] = await get_filter_mangas(params={
           "language": language,
           "genres": genres,
           "rating_type": rating_type,
           "sort": sort,
           "status": status,
           "type": read_type,
-
+          "page": page,
      })
+
+     if data == CRASH:
+          return response.crash_response()
+
      return response.successful_response({"data": data })
+
+@router.get("/{manga_ID}")
+async def manga(manga_ID: str) -> JSONResponse:
+     data: Union[Dict[str, str], int] = await get_manga(manga_ID=manga_ID)
+
+     if data == NOT_FOUND:
+          return response.not_found_response()
+
+     return response.successful_response({"data": data })
+
 
