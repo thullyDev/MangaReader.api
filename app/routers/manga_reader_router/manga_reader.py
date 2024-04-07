@@ -32,14 +32,14 @@ async def get_featured_mangas() -> Union[List[Dict[str, str]], int]:
 
     return data
 
-async def get_filter_mangas(*, params={}) -> Union[Dict[str, Union[List, Dict]], int]:
+async def get_filter_mangas(*, endpoint="/filter", params={}) -> Union[Dict[str, Union[List, Dict]], int]:
     filter_data: Dict[str, Optional[str]] = {
         key: value
         for key, value in params.items()
         if value and key in { "type", "score", "rating_type", "sort", "genres", "language", "page" }
     }
 
-    response: Any = await api.get(endpoint="/filter", params=filter_data, html=True)
+    response: Any = await api.get(endpoint=endpoint, params=filter_data, html=True)
     
     if type(response) is int:
         return CRASH
@@ -48,10 +48,10 @@ async def get_filter_mangas(*, params={}) -> Union[Dict[str, Union[List, Dict]],
     items: List = soup.select('.item.item-spc')
     last_page_link = soup.select('.page-link')[-1]
     pages = last_page_link.text 
-    
+
     if pages == "»":
         href: Any = last_page_link.get("href")
-        page = href.split("=")[-1]
+        pages = href.split("=")[-1]
 
     page: str = params['page']
     data: List[Dict[str, Union[str, List]]] = []

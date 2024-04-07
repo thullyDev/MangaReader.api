@@ -28,7 +28,7 @@ async def filter(
      rating_type: Optional[str] = None,
      page: Optional[str] = "1"
      ) -> JSONResponse:
-     data: Union[List[Dict[str, Union[str, List]]], int] = await get_filter_mangas(params={
+     data: Union[Dict[str, Union[List, Dict]], int] = await get_filter_mangas(params={
           "language": language,
           "genres": genres,
           "rating_type": rating_type,
@@ -37,6 +37,15 @@ async def filter(
           "type": read_type,
           "page": page,
      })
+
+     if data == CRASH:
+          return response.crash_response()
+
+     return response.successful_response({"data": data })
+
+@router.get("/genre/{genre_ID}")
+async def filter(genre_ID, page: Optional[str] = "1") -> JSONResponse:
+     data: Union[Dict[str, Union[List, Dict]], int] = await get_filter_mangas(endpoint=f"/genre/{genre_ID}", params={ "page": page })
 
      if data == CRASH:
           return response.crash_response()
