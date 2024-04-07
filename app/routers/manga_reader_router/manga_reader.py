@@ -86,17 +86,7 @@ async def get_filter_mangas(*, endpoint="/filter", params={}) -> Union[Dict[str,
 async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
     response: Any = await api.get(endpoint=f"/{manga_ID}", html=True)
 
-    # type
-    # status
-    # authors
-    # magazines
-    # published
-    # score
-    # views
-    # description
-    # genres
     # chapters
-    # alternate name
     # related manga
 
     
@@ -106,13 +96,43 @@ async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
     soup = get_soup(html=response)
     image_data = get_data_from_image(soup)
     alt_name: str = soup.select('.manga-name-or')[0].text
-    description: str = soup.select('.description')[0].text
+    description: str = soup.select('.description')[0].text.strip()
+    types = get_data_from_ticks(soup.select(".item.item-title:first-child > a")) 
+    magazines = get_data_from_ticks(soup.select(".item.item-title:nth-child(4) > a")) 
+    authors = get_data_from_ticks(soup.select(".item.item-title:nth-child(3) > a")) 
+    genres = get_data_from_ticks(soup.select(".genres > a")) 
+    status = get_data_from_ticks(soup.select(".item.item-title:nth-child(2) > span.name"), is_dynamic=False) 
+    published = get_data_from_ticks(soup.select(".item.item-title:nth-child(5) > span.name"), is_dynamic=False) 
+    score = get_data_from_ticks(soup.select(".item.item-title:nth-child(6) > span.name"), is_dynamic=False) 
+    views = get_data_from_ticks(soup.select(".item.item-title:nth-child(7) > span.name"), is_dynamic=False) 
+
+    characters: list[Dict] = []
+    for item in soup.select(".cl-item"):
+        image_url = item.select(".character-thumb img")[0].get("src")
+        name = item.select(".character-thumb img")[0].get("alt")
+        role = item.select(".sub")[0].text
+
+        characters.append({
+            "image_url": image_url,
+            "name": name,
+            "role": role,
+        })
+
 
     return {
         "manga": {
             **image_data,
             "alt_name": alt_name,
             "description": description,
+            "genres": genres,
+            "types": types,
+            "magazines": magazines,
+            "authors": authors,
+            "status": status,
+            "published": published,
+            "score": score,
+            "views": views,
+            "characters": characters,
         }
     }
 
@@ -128,3 +148,19 @@ def get_data_from_image(item) -> Dict[str, str]:
         "title": title,
         "image_url": image_url,
     }
+
+def get_data_from_ticks(items, is_dynamic: bool =True) -> List[Dict[str, str]]:
+    if not is_dynamic:
+        return items[0].text
+
+    data: List[Dict[str, str]] = []
+    for item in items:
+        slug = item.get("href").split("/")[-1]
+        name = item.text
+
+        data.append({
+            "name": name,
+            "slug": slug,
+        })
+
+    return data
