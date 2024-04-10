@@ -82,7 +82,6 @@ async def get_filter_mangas(*, endpoint="/filter", params={}) -> Union[Dict[str,
         }
     }
 
-
 async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
     response: Any = await api.get(endpoint=f"/{manga_ID}", html=True)
 
@@ -116,7 +115,6 @@ async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
 
     chapters: list[Dict] = []
     for item in soup.select(".chapter-item > a"):
-        print(item)
         slug = item.get("href")
         title = item.get("title")
 
@@ -143,6 +141,22 @@ async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
             "chapters": chapters,
         }
     }
+
+async def get_panels(manga_ID: str, lang: str, chapter_ID: str) -> Union[Dict[str, str], int]:
+    ID: str = chapter_ID.replace("chapter-", "")
+    response: Any = await api.get(endpoint=f"/ajax/image/list/chap/{ID}", params={
+            "mode": "horizontal",
+            "quality": "high",
+        }, html=True)
+
+    if type(response) is int:
+        return NOT_FOUND
+
+    return response
+
+    soup = get_soup(html=response)
+    
+    return {}
 
 def get_soup(html) -> BeautifulSoup:
     return BeautifulSoup(html, 'html.parser')

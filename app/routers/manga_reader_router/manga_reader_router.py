@@ -7,7 +7,8 @@ from typing import Any, Dict, List, Union, Optional
 from .manga_reader import (
      get_featured_mangas,
      get_filter_mangas,
-     get_manga
+     get_manga,
+     get_panels
 )
 
 router: APIRouter = APIRouter(prefix="/manga")
@@ -58,6 +59,15 @@ async def get_type(type_ID, page: Optional[str] = "1") -> JSONResponse:
 
      if data == CRASH:
           return response.crash_response()
+
+     return response.successful_response({"data": data })
+
+@router.get("/read/{manga_ID}/{lang}/{chapter_ID}")
+async def read(manga_ID: str, chapter_ID: str, lang: str) -> JSONResponse:
+     data: Union[Dict[str, str], int] = await get_panels(manga_ID=manga_ID, chapter_ID=chapter_ID, lang=lang)
+
+     if data == NOT_FOUND:
+          return response.not_found_response()
 
      return response.successful_response({"data": data })
 
