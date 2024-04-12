@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from app.handlers.api_handler import ApiHandler
 from app.resources.errors import CRASH, NOT_FOUND
 from pprint import pprint
+import json
 
 api = ApiHandler("https://mangareader.to")
 
@@ -142,7 +143,7 @@ async def get_manga(manga_ID: str) -> Union[Dict[str, Any], int]:
         }
     }
 
-async def get_panels(manga_ID: str, lang: str, chapter_ID: str) -> Union[Dict[str, str], int]:
+async def get_panels(chapter_ID: str) -> Union[Dict[str, List], int]:
     ID: str = chapter_ID.replace("chapter-", "")
     response: Any = await api.get(endpoint=f"/ajax/image/list/chap/{ID}", params={
             "mode": "horizontal",
@@ -152,11 +153,17 @@ async def get_panels(manga_ID: str, lang: str, chapter_ID: str) -> Union[Dict[st
     if type(response) is int:
         return NOT_FOUND
 
-    return response
+    response = json.loads(response)
+    soup = get_soup(html=response.get("html"))
+    images_elements = soup.select(".ds-image.shuffled")  
+    panels: List[str] = []  
+    for image_ele in images_elements:
+        image_url = image_ele.get("data-url")
+        panels.append(image_url)
 
-    soup = get_soup(html=response)
-    
-    return {}
+    return {
+        "panels": panels,
+    }
 
 def get_soup(html) -> BeautifulSoup:
     return BeautifulSoup(html, 'html.parser')

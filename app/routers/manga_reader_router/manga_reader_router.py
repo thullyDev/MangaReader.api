@@ -1,8 +1,9 @@
+from pprint import pprint
 from fastapi import APIRouter, params
 from fastapi.responses import JSONResponse
-
+from app.handlers.response_handler import ResponseHandler
 from app.resources.errors import CRASH, NOT_FOUND
-from ...handlers import ResponseHandler
+# from app.resources.handlers import ResponseHandler
 from typing import Any, Dict, List, Union, Optional
 from .manga_reader import (
      get_featured_mangas,
@@ -10,7 +11,6 @@ from .manga_reader import (
      get_manga,
      get_panels
 )
-
 router: APIRouter = APIRouter(prefix="/manga")
 response: ResponseHandler = ResponseHandler()
 
@@ -62,9 +62,9 @@ async def get_type(type_ID, page: Optional[str] = "1") -> JSONResponse:
 
      return response.successful_response({"data": data })
 
-@router.get("/read/{manga_ID}/{lang}/{chapter_ID}")
-async def read(manga_ID: str, chapter_ID: str, lang: str) -> JSONResponse:
-     data: Union[Dict[str, str], int] = await get_panels(manga_ID=manga_ID, chapter_ID=chapter_ID, lang=lang)
+@router.get("/read/{chapter_ID}")
+async def read(chapter_ID: str) -> JSONResponse:
+     data: Union[Dict[str, List], int] = await get_panels(chapter_ID=chapter_ID)
 
      if data == NOT_FOUND:
           return response.not_found_response()
