@@ -37,7 +37,7 @@ async def get_filter_mangas(*, endpoint="/filter", params={}) -> Union[Dict[str,
     filter_data: Dict[str, Optional[str]] = {
         key: value
         for key, value in params.items()
-        if value and key in { "type", "score", "rating_type", "sort", "genres", "language", "page" }
+        if value and key in { "keyword", "type", "score", "rating_type", "sort", "genres", "language", "page" }
     }
 
     response: Any = await api.get(endpoint=endpoint, params=filter_data, html=True)

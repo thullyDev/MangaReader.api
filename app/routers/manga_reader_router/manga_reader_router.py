@@ -11,6 +11,8 @@ from .manga_reader import (
      get_manga,
      get_panels
 )
+from urllib.parse import quote
+
 router: APIRouter = APIRouter(prefix="/manga")
 response: ResponseHandler = ResponseHandler()
 
@@ -27,6 +29,7 @@ async def filter(
      status: Optional[str] = None, 
      read_type: Optional[str] = None, 
      rating_type: Optional[str] = None,
+     keyword: Optional[str] = None, 
      page: Optional[str] = "1"
      ) -> JSONResponse:
      data: Union[Dict[str, Union[List, Dict]], int] = await get_filter_mangas(params={
@@ -37,6 +40,7 @@ async def filter(
           "status": status,
           "type": read_type,
           "page": page,
+          "keyword": quote(string=keyword), # type: ignore
      })
 
      if data == CRASH:
